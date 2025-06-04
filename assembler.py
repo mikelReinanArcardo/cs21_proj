@@ -1,0 +1,33 @@
+import sys
+from convert import convert_inst
+
+if __name__ == "__main__":
+    # takes in two arguments as specified in the specs
+    input_filename = sys.argv[1]
+    format = sys.argv[2]
+    output = []
+
+    # read instructions
+    with open(input_filename, "r") as f:
+        for line in f:
+            instr = line.strip().split(" ")
+
+            # if whiteline or comment
+            if not instr[0] or instr[0][0] == "#":
+                continue
+
+            # convert to machine code
+            machine_code = convert_inst(instr)
+
+            if not machine_code:
+                raise SyntaxError(f"Invalid Instruction: {line}")
+
+            # machine code line
+            for mcl in machine_code:
+                output.append(mcl)
+
+    output_filename = input_filename[:input_filename.index(".")] + ".txt"
+    with open(output_filename, "w") as f:
+        for line in output:
+            f.write(line)
+            f.write("\n")
