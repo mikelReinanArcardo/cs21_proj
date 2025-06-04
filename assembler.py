@@ -24,7 +24,10 @@ if __name__ == "__main__":
 
             # machine code line
             for mcl in machine_code:
-                output.append(mcl)
+                if format == "hex":
+                    output.append(hex(int(mcl, 2))[2:].zfill(2))
+                else:
+                    output.append(mcl)
 
     output_filename = input_filename[:input_filename.index(".")] + ".txt"
     with open(output_filename, "w") as f:
