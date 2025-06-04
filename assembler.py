@@ -16,8 +16,12 @@ if __name__ == "__main__":
             if not instr[0] or instr[0][0] == "#":
                 continue
 
-            # convert to machine code
-            machine_code = convert_inst(instr)
+            # .byte directive
+            if instr[0] == ".byte":
+                machine_code = [bin(int(instr[1], 16))[2:].zfill(8)]
+            else:
+                # convert to machine code
+                machine_code = convert_inst(instr)
 
             if not machine_code:
                 raise SyntaxError(f"Invalid Instruction: {line}")
@@ -25,7 +29,7 @@ if __name__ == "__main__":
             # machine code line
             for mcl in machine_code:
                 if format == "hex":
-                    output.append(hex(int(mcl, 2))[2:].zfill(2))
+                    output.append(hex(int(mcl, 2))[2:].zfill(2).upper())
                 else:
                     output.append(mcl)
 

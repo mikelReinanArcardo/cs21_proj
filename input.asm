@@ -88,3 +88,11 @@ b-timer 2047
 bnz-d 2047
 b 2047
 call 2047
+
+# .byte directives
+.byte 0x00
+.byte 0xff
+.byte 0xf2
+.byte 0xeA
+.byte 0xBC
+.byte 0xD1
