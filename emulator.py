@@ -67,13 +67,13 @@ class Emulator:
                            self.blocksize, self.blocksize, color)
 
     def get_input(self):
-        if pyxel.btnp(pyxel.KEY_DOWN):
-            self.program.ioa |= 0b1000
-        if pyxel.btnp(pyxel.KEY_UP):
-            self.program.ioa |= 0b0100
         if pyxel.btnp(pyxel.KEY_RIGHT):
-            self.program.ioa |= 0b0010
+            self.program.ioa |= 0b1000
         if pyxel.btnp(pyxel.KEY_LEFT):
+            self.program.ioa |= 0b0100
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.program.ioa |= 0b0010
+        if pyxel.btnp(pyxel.KEY_UP):
             self.program.ioa |= 0b0001
 
     def update(self):
