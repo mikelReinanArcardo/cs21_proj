@@ -102,8 +102,8 @@ def convert_special_inst(word, instr):
     # rarb/rcrd
     if 0 <= i <= 1:
         imm = bin(int(instr[-1]))[2:].zfill(8)
-        x = imm[:4]
-        y = imm[4:]
+        x = imm[4:]
+        y = imm[:4]
         pat1 = "0101" if i == 0 else "0110"
         pat2 = "0000"
         return [string_to_binary(pat1+x), string_to_binary(pat2+y)]
