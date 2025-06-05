@@ -6,9 +6,6 @@ class Program:
 
         self.pc = 0b0000000000000000
 
-        # each instruction is 8 or 16 bits = 1 or 2 byte/s
-        self.pc_step = 0b100000000
-
         self.acc = 0b1111
         self.cf = 0b0
 
@@ -30,14 +27,13 @@ class Program:
         self.last_instr = ""
 
     def iterate_pc(self):
-        self.pc += self.pc_step
+        self.pc += 1
 
     def run_instr(self):
-        i = self.pc // self.pc_step
-        if i >= len(self.instr_mem):
+        if self.pc >= len(self.instr_mem):
             # do nothing if no more valid instructions
             return
-        self.decode(self.instr_mem[i])
+        self.decode(self.instr_mem[self.pc])
 
     def decode(self, instr: str):
         if self.is_branch:
@@ -117,8 +113,7 @@ class Program:
 
             # call
             elif self.last_instr[:4] == "1111":
-                # NOTE: unsure if its 2 as is or 2 * <pc_step>
-                self.temp = self.pc + 2*self.pc_step
+                self.temp = self.pc + 2
 
                 b = self.last_instr[4:]
                 imm = int(b+instr, 2)
