@@ -1,4 +1,5 @@
 import pyxel
+from decoder import Program
 
 
 class Emulator:
