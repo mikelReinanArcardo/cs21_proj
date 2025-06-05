@@ -29,6 +29,16 @@ class Program:
 
         self.last_instr = ""
 
+    def iterate_pc(self):
+        self.pc += self.pc_step
+
+    def run_instr(self):
+        i = self.pc // self.pc_step
+        if i >= len(self.instr_mem):
+            # do nothing if no more valid instructions
+            return
+        self.decode(self.instr_mem[i])
+
     def decode(self, instr: str):
         if self.is_branch:
             # b-bit
@@ -153,48 +163,48 @@ class Program:
             elif instr == "00000001":
                 self.acc = (self.acc << 1) & 0b1111
             elif instr == "00000010":
-                concat = int(bin(int(str(self.cf) + str(self.acc))), 2)
+                concat = (self.cf << 4) | self.acc
                 res = concat >> 1
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
             elif instr == "00000011":
-                concat = int(bin(int(str(self.cf) + str(self.acc))), 2)
+                concat = (self.cf << 4) | self.acc
                 res = concat << 1
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
             elif instr == "00000100":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.acc = self.mem[concat]
             elif instr == "00000101":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = self.acc
             elif instr == "00000110":
-                concat = int(bin(int(str(self.reg[3]) + str(self.reg[2]))), 2)
+                concat = (self.reg[3] << 4) | self.reg[2]
                 self.acc = self.mem[concat]
             elif instr == "00000111":
-                concat = int(bin(int(str(self.reg[3]) + str(self.reg[2]))), 2)
+                concat = (self.reg[3] << 4) | self.reg[2]
                 self.mem[concat] = self.acc
 
             elif instr == "00001000":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc + self.mem[concat] + self.cf
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
 
             elif instr == "00001001":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc + self.mem[concat]
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
 
             elif instr == "00001010":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc - self.mem[concat] + self.cf
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
 
             elif instr == "00001011":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc - self.mem[concat]
                 self.acc = res & 0b1111
                 self.cf = (res & 0b10000) >> 4
@@ -202,19 +212,19 @@ class Program:
             # TODO: Test and Ensure that it remains the same size
 
             elif instr == "00001100":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = (self.mem[concat] + 1) & 0b11111111
 
             elif instr == "00001101":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = (self.mem[concat] - 1) & 0b11111111
 
             elif instr == "00001110":
-                concat = int(bin(int(str(self.reg[3]) + str(self.reg[2]))), 2)
+                concat = (self.reg[3] << 4) | self.reg[2]
                 self.mem[concat] = (self.mem[concat] + 1) & 0b11111111
 
             elif instr == "00001111":
-                concat = int(bin(int(str(self.reg[3]) + str(self.reg[2]))), 2)
+                concat = (self.reg[3] << 4) | self.reg[2]
                 self.mem[concat] = (self.mem[concat] - 1) & 0b11111111
 
             elif instr[:4] == "0001" and instr[-1] == "0" and int(instr[-4:-1], 2) <= 4:
@@ -226,27 +236,27 @@ class Program:
                 self.reg[r] = (self.reg[r] - 1) & 0b1111
 
             elif instr == "00011010":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.acc = self.acc & self.mem[concat]
 
             elif instr == "00011011":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.acc = self.acc ^ self.mem[concat]
 
             elif instr == "00011100":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.acc = self.acc | self.mem[concat]
 
             elif instr == "00011101":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = self.acc & self.mem[concat]
 
             elif instr == "00011110":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = self.acc ^ self.mem[concat]
 
             elif instr == "00011111":
-                concat = int(bin(int(str(self.reg[1]) + str(self.reg[0]))), 2)
+                concat = (self.reg[1] << 4) | self.reg[0]
                 self.mem[concat] = self.acc | self.mem[concat]
 
             elif instr[:4] == "0010" and instr[-1] == "0" and int(instr[-4:-1], 2) <= 4:
@@ -313,6 +323,11 @@ class Program:
         self.is_imm = False
         self.last_instr = ""
         self.is_branch = False
+
+        # for debugging
+        # print(self.acc)
+        # print(self.reg)
+        # print()
 
 # test = Program([])
 # print(test.acc)
