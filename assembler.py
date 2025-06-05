@@ -13,7 +13,7 @@ if __name__ == "__main__":
             instr = line.strip().split(" ")
 
             # if whiteline or comment
-            if not instr[0] or instr[0][0] == "#":
+            if not instr[0] or instr[0][0] in ["#", ";"]:
                 continue
 
             # .byte directive
