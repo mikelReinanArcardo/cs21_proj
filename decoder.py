@@ -26,8 +26,21 @@ class Program:
 
         self.last_instr = ""
 
+        self.next_pc = 1
+
+    def run(self):
+        while self.pc < len(self.instr_mem):
+            self.run_instr()
+            self.iterate_pc()
+            if self.shutdown:
+                break
+
     def iterate_pc(self):
-        self.pc += 1
+        if self.next_pc > 1:
+            self.pc = self.next_pc
+            self.next_pc = 1
+        else:
+            self.pc += 1
 
     def run_instr(self):
         if self.pc >= len(self.instr_mem):
@@ -46,7 +59,7 @@ class Program:
                 if (self.acc >> k) & 0b1 == 0b1:
                     # keep first five bits
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # bnz-a
             elif self.last_instr[:5] == "10100":
@@ -54,7 +67,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.reg[0] != 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # bnz-b
             elif self.last_instr[:5] == "10101":
@@ -62,7 +75,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.reg[1] != 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # beqz
             elif self.last_instr[:5] == "10110":
@@ -70,7 +83,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.acc == 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # bnez
             elif self.last_instr[:5] == "10111":
@@ -78,7 +91,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.acc != 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # beqz-cf
             elif self.last_instr[:5] == "11000":
@@ -86,7 +99,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.cf == 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # bnez-cf
             elif self.last_instr[:5] == "11001":
@@ -94,7 +107,7 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.cf != 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # bnz-d
             elif self.last_instr[:5] == "11011":
@@ -102,14 +115,14 @@ class Program:
                 imm = int(b+instr, 2)
                 if self.reg[3] != 0:
                     tmp = self.pc & 0b1111100000000000
-                    self.pc = tmp | imm
+                    self.next_pc = tmp | imm
 
             # b
             elif self.last_instr[:4] == "1110":
                 b = self.last_instr[4:]
                 imm = int(b+instr, 2)
                 tmp = self.pc & 0b1111000000000000
-                self.pc = tmp | imm
+                self.next_pc = tmp | imm
 
             # call
             elif self.last_instr[:4] == "1111":
@@ -118,7 +131,10 @@ class Program:
                 b = self.last_instr[4:]
                 imm = int(b+instr, 2)
                 tmp = self.pc & 0b1111000000000000
-                self.pc = tmp | imm
+                self.next_pc = tmp | imm
+
+            self.is_branch = False
+            return
 
         if self.is_imm:
             # check if first 4 bits is 0000
@@ -318,6 +334,7 @@ class Program:
         self.is_imm = False
         self.last_instr = ""
         self.is_branch = False
+        self.next_pc = 1
 
         # for debugging
         # print(self.acc)
