@@ -8,7 +8,7 @@ class Emulator:
         self.blocksize = 16
 
         # Arch-242 program
-        self.program = Program(instructions)
+        self.program = Program(instructions)    
         # TEMPORARY: assign snake head
         # self.program.mem[200] = 0b00001110
 
@@ -130,7 +130,40 @@ class Emulator:
         #         self.init_game()
 
     def draw(self):
-        self.update_grid()
+        try:
+            pyxel.cls(0)
+            
+            # Draw game grid
+            for y in range(20):
+                for x in range(10):
+                    # Calculate memory address for this position
+                    addr = 192 + (y * 10 + x) // 4
+                    bit_pos = (y * 10 + x) % 4
+                    led_on = (self.program.mem[addr] >> bit_pos) & 1
+                    
+                    if led_on:
+                        color = 11  # Snake color
+                        # Check if it's the head (MEM[33] has the head LED bit)
+                        if addr == (192 + (self.program.mem[1] * 10 + self.program.mem[2]) // 4):
+                            if bit_pos == (self.program.mem[1] * 10 + self.program.mem[2]) % 4:
+                                color = 8  # Head color
+                        
+                        pyxel.rect(x * self.blocksize + 6 * self.blocksize, 
+                                (y + 3) * self.blocksize,
+                                self.blocksize - 1, self.blocksize - 1, color)
+            
+            # Draw score
+            score = self.program.mem[49] & 0xF
+            pyxel.text(2 * self.blocksize, 2 * self.blocksize, 
+                    f"Score: {score}", 7)
+            
+            # Draw tick count
+            ticks = self.program.mem[0] & 0xFF
+            pyxel.text(2 * self.blocksize, 4 * self.blocksize, 
+                    f"Tick: {ticks}", 7)
+            
+        except Exception as e:
+            print("Drawing error:", e)
 
 
 if __name__ == "__main__":

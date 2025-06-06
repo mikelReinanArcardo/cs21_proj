@@ -16,7 +16,7 @@ if __name__ == "__main__":
     pc = 0
 
     # find all labels first in the instruction file and track valid instructions
-    with open(input_filename, "r") as f:
+    with open(input_filename, "r", encoding="utf-8") as f:
         for i, line in enumerate(f):
             instr = line.strip().split(" ")
 
@@ -45,7 +45,7 @@ if __name__ == "__main__":
                 pc += len(machine_code)
 
     # read instructions
-    with open(input_filename, "r") as f:
+    with open(input_filename, "r", encoding="utf-8") as f:
         for line in f:
             instr = line.strip().split(" ")
 

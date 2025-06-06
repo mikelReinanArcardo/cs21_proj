@@ -171,7 +171,161 @@ from-mba
 beqz move
 bnez loop
 
+# --- Movement Logic Update ---
 move:
+    # Clear old snake segments from display
+    rcrd 1
+    from-mdc
+    to-reg ra
+    rcrd 2
+    from-mdc
+    to-reg rb
+    rcrd 33
+    from-mdc
+    xor*-mba
 
+    rcrd 3
+    from-mdc
+    to-reg ra
+    rcrd 4
+    from-mdc
+    to-reg rb
+    rcrd 34
+    from-mdc
+    xor*-mba
 
+    rcrd 5
+    from-mdc
+    to-reg ra
+    rcrd 6
+    from-mdc
+    to-reg rb
+    rcrd 35
+    from-mdc
+    xor*-mba
 
+    # Shift segment 2 ← segment 1
+    rarb 3
+    from-mba
+    rarb 5
+    to-mba
+    rarb 4
+    from-mba
+    rarb 6
+    to-mba
+
+    # Shift segment 1 ← head
+    rarb 1
+    from-mba
+    rarb 3
+    to-mba
+    rarb 2
+    from-mba
+    rarb 4
+    to-mba
+
+    # Read orientation into RE
+    rarb 48
+    from-mba
+    to-reg re
+
+    # Load old head X and Y into RA and RB
+    rarb 1
+    from-mba
+    to-reg ra
+    rarb 2
+    from-mba
+    to-reg rb
+
+    # Check for input (IOA stores next_orientation)
+    from-pa
+    beqz no_input
+    to-reg re
+    rarb 48
+    to-mba
+
+no_input:
+    # Determine new direction
+    from-reg re
+    xor 8
+    beqz move_right
+    from-reg re
+    xor 4
+    beqz move_left
+    from-reg re
+    xor 2
+    beqz move_down
+    b move_up
+
+move_right:
+    from-reg ra
+    inc
+    and 15  
+    rarb 1
+    to-mba
+    b move_done
+
+move_left:
+    from-reg ra
+    dec
+    and 15  
+    rarb 1
+    to-mba
+    b move_done
+
+move_down:
+    from-reg rb
+    inc
+    and 15  
+    rarb 2
+    to-mba
+    b move_done
+
+move_up:
+    from-reg rb
+    dec
+    and 15  
+    rarb 2
+    to-mba
+
+move_done:
+    # Draw new snake positions
+    rcrd 1
+    from-mdc
+    to-reg ra
+    rcrd 2
+    from-mdc
+    to-reg rb
+    rcrd 33
+    from-mdc
+    or*-mba
+
+    rcrd 3
+    from-mdc
+    to-reg ra
+    rcrd 4
+    from-mdc
+    to-reg rb
+    rcrd 34
+    from-mdc
+    or*-mba
+
+    rcrd 5
+    from-mdc
+    to-reg ra
+    rcrd 6
+    from-mdc
+    to-reg rb
+    rcrd 35
+    from-mdc
+    or*-mba
+
+    # Delay to control speed
+    rarb 0
+    from-mba
+    add 1
+    rarb 0
+    to-mba
+    and 3  
+    beqz loop
+    b tick
