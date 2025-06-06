@@ -32,11 +32,9 @@ if __name__ == "__main__":
                     labels[label] = bin(pc)[2:].zfill(8)
                 pc += 2
 
-            # convert labels to immediate for branch instructions
             elif instr[0] in branch_instr and not instr[1].isdigit():
                 pc += 2
 
-            # .byte directive
             elif instr[0] == ".byte":
                 pc += 1
             else:

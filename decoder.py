@@ -28,17 +28,27 @@ class Program:
 
         self.next_pc = 1
 
+        self.labels = dict()
+        self.is_label = False
+
+        self.jump = False
+
     def run(self):
         while self.pc < len(self.instr_mem):
             self.run_instr()
             self.iterate_pc()
+
+            # for debugging
+            # print("pc:", self.pc)
+            # print("acc:", self.acc)
+
             if self.shutdown:
                 break
 
     def iterate_pc(self):
-        if self.next_pc > 1:
+        if self.jump:
             self.pc = self.next_pc
-            self.next_pc = 1
+            self.jump = False
         else:
             self.pc += 1
 
@@ -60,6 +70,7 @@ class Program:
                     # keep first five bits
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # bnz-a
             elif self.last_instr[:5] == "10100":
@@ -68,6 +79,7 @@ class Program:
                 if self.reg[0] != 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # bnz-b
             elif self.last_instr[:5] == "10101":
@@ -76,6 +88,7 @@ class Program:
                 if self.reg[1] != 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # beqz
             elif self.last_instr[:5] == "10110":
@@ -84,6 +97,7 @@ class Program:
                 if self.acc == 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # bnez
             elif self.last_instr[:5] == "10111":
@@ -92,6 +106,7 @@ class Program:
                 if self.acc != 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # beqz-cf
             elif self.last_instr[:5] == "11000":
@@ -100,6 +115,7 @@ class Program:
                 if self.cf == 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # bnez-cf
             elif self.last_instr[:5] == "11001":
@@ -108,6 +124,7 @@ class Program:
                 if self.cf != 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # bnz-d
             elif self.last_instr[:5] == "11011":
@@ -116,6 +133,7 @@ class Program:
                 if self.reg[3] != 0:
                     tmp = self.pc & 0b1111100000000000
                     self.next_pc = tmp | imm
+                    self.jump = True
 
             # b
             elif self.last_instr[:4] == "1110":
@@ -123,20 +141,21 @@ class Program:
                 imm = int(b+instr, 2)
                 tmp = self.pc & 0b1111000000000000
                 self.next_pc = tmp | imm
+                self.jump = True
 
             # call
             elif self.last_instr[:4] == "1111":
                 self.temp = self.pc + 2
-
                 b = self.last_instr[4:]
                 imm = int(b+instr, 2)
                 tmp = self.pc & 0b1111000000000000
                 self.next_pc = tmp | imm
+                self.jump = True
 
             self.is_branch = False
             return
 
-        if self.is_imm:
+        elif self.is_imm:
             # check if first 4 bits is 0000
             if instr[:4] != "0000":
                 self.is_imm = False
@@ -167,6 +186,11 @@ class Program:
             if instr == "00111110":
                 self.shutdown = True
                 return
+
+        elif self.is_label:
+            # do nothing
+            self.is_label = False
+            return
 
         else:
             if instr == "00000000":
@@ -328,6 +352,11 @@ class Program:
                 self.is_branch = True
                 return
 
+            # label
+            elif instr == "01001000":
+                self.is_label = True
+                return
+
         # don't forget to revert this
         self.is_shutdown = False
         self.shutdown = False
@@ -335,6 +364,7 @@ class Program:
         self.last_instr = ""
         self.is_branch = False
         self.next_pc = 1
+        self.is_label = False
 
         # for debugging
         # print(self.acc)
