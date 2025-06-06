@@ -46,7 +46,6 @@ to-mba
 rarb 49
 acc 0
 to-mba
-# PC_next: 15
 
 # coordinates of the head
 # self.snake_coords[0][0] = 6
@@ -67,7 +66,6 @@ to-mba
 acc 8
 rarb 33
 to-mba
-# PC_next: 29
 
 # set body segment 1
 rcrd 200
@@ -83,7 +81,6 @@ to-mba
 acc 4
 rarb 34
 to-mba
-# PC_next: 43
 
 
 # set body segment 2
@@ -100,7 +97,6 @@ to-mba
 acc 2
 rarb 35
 to-mba
-# PC_next: 56
 
 # Draw Snake
 rcrd 1
@@ -112,7 +108,6 @@ to-reg rb
 rcrd 33
 from-mdc
 or*-mba
-# PC_next: 68
 
 rcrd 3
 from-mdc
@@ -123,7 +118,6 @@ to-reg rb
 rcrd 34
 from-mdc
 or*-mba
-# PC_next: 80
 
 rcrd 5
 from-mdc
@@ -134,7 +128,6 @@ to-reg rb
 rcrd 35
 from-mdc
 or*-mba
-# PC_next: 92
 
 # set food coords
 rcrd 230
@@ -150,7 +143,6 @@ to-mba
 acc 4
 rarb 52
 to-mba
-# PC_next: 106
 
 # show food in grid
 rcrd 50
@@ -162,15 +154,24 @@ to-reg rb
 rcrd 52
 from-mdc
 or*-mba
-# PC_next: 118
 
 # Game Loop
 # Stop if dead
-bnez-cf 123 
+loop:
+bnez-cf tick 
 shutdown
 
 # add 1 to game tick
+tick:
 rarb 0
 inc*-mba
-# PC_next: 126
+
+from-mba
+# TODO ADJUST TICK SPEED: might be too slow (every time acc overflows = 1 tick so every 16 ticks it moves)
+beqz move
+bnez loop
+
+move:
+
+
 
