@@ -17,7 +17,6 @@ class Emulator:
         pyxel.init(22*self.blocksize, 26*self.blocksize)
 
         pyxel.cls(0)
-        self.program.run()
 
         pyxel.run(self.update, self.draw)
 
@@ -48,86 +47,12 @@ class Emulator:
     def update(self):
         self.get_input()
 
-        # temp
-        if self.program.shutdown:
-            print("SHUTDOWN")
+        if not self.program.shutdown:
+            self.program.step()
 
-        # should reset every tick
-        # print(self.program.ioa)
-
-        # if not self.dead:
-        #     self.timer += 1
-        #
-        #     if self.timer % 25 == 0 and not self.has_food:
-        #         new_x = randint(0, 9)
-        #         new_y = randint(0, 19)
-        #         while self.grid[new_y][new_x] == 1:
-        #             new_x = randint(0, 9)
-        #             new_y = randint(0, 19)
-        #
-        #         self.has_food = True
-        #         self.food_x = new_x
-        #         self.food_y = new_y
-        #         self.grid[self.food_y][self.food_x] = 1
-        #
-        #     if self.timer % 5 == 0:
-        #         self.grid[self.snake_coords[-1][1]
-        #                   ][self.snake_coords[-1][0]] = 0
-        #
-        #         self.orientation = self.next_orientation if self.next_orientation > - \
-        #             1 else self.orientation
-        #
-        #         x, y = self.snake_coords[0][0], self.snake_coords[0][1]
-        #         if self.orientation == 0:
-        #             x -= 1
-        #         elif self.orientation == 1:
-        #             y -= 1
-        #         elif self.orientation == 2:
-        #             x += 1
-        #         elif self.orientation == 3:
-        #             y += 1
-        #
-        #         # out of bounds
-        #         if not (0 <= x < 10) or not (0 <= y < 20):
-        #             pyxel.cls(1)
-        #             self.dead = True
-        #             self.grid = [[0]*10 for _ in range(20)]
-        #             pyxel.text(11*self.blocksize, 13 *
-        #                        self.blocksize, "Game Over", 2)
-        #             return
-        #
-        #         # if it touches itself
-        #         for x2, y2 in self.snake_coords:
-        #             if x == x2 and y == y2:
-        #                 pyxel.cls(1)
-        #                 self.dead = True
-        #                 self.grid = [[0]*10 for _ in range(20)]
-        #                 pyxel.text(11*self.blocksize, 13 *
-        #                            self.blocksize, "Game Over", 2)
-        #                 return
-        #
-        #         # if touches food
-        #         if x == self.food_x and y == self.food_y:
-        #             self.has_food = False
-        #             self.grid[self.food_y][self.food_x] = 0
-        #             self.snake_coords.append([-1, -1])
-        #             self.len += 1
-        #
-        #         # change snake coords
-        #         for i in range(self.len-1, 0, -1):
-        #             self.snake_coords[i][0] = self.snake_coords[i-1][0]
-        #             self.snake_coords[i][1] = self.snake_coords[i-1][1]
-        #
-        #         self.snake_coords[0][0], self.snake_coords[0][1] = x, y
-        #
-        #         for x, y in self.snake_coords:
-        #             self.grid[y][x] = 1
-        #
-        #             self.next_orientation = -1
-        #
-        # else:
-        #     if pyxel.btnp(pyxel.KEY_R):
-        #         self.init_game()
+        else:
+            print("Program shut down")            
+            pyxel.quit()
 
     def draw(self):
         try:

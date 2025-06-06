@@ -58,6 +58,15 @@ class Program:
             return
         self.decode(self.instr_mem[self.pc])
 
+    def step(self):
+        """Run multiple instructions per step for better performance"""
+        instructions_per_step=1
+        for _ in range(instructions_per_step):
+            if self.pc >= len(self.instr_mem) or self.shutdown:
+                break
+            self.run_instr()
+            self.iterate_pc()
+        
     def decode(self, instr: str):
         if self.is_branch:
             # b-bit
