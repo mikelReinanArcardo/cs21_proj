@@ -135,13 +135,13 @@ class Emulator:
 
 if __name__ == "__main__":
     # set .asm file here
-    program_file = "test_label.asm"
+    program_file = "input.asm"
 
     # compile the instruction code
     os.system(f'python3 assembler.py {program_file} bin')
 
     # set output file of assembler here / usually same name just different file format
-    input_filename = "test_label.txt"
+    input_filename = "input.txt"
 
     machine_code_instructions = []
 
