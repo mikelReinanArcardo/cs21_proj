@@ -33,23 +33,11 @@ instruction_encodings = {
     # "from-reg": [0b0010RRR1]
     "clr-cf": [0b00101010],
     "set-cf": [0b00101011],
-    "set-ei": [0b00101100],
-    "clr-ei": [0b00101101],
     "ret": [0b00101110],
-    "retc": [0b00101111],
-    "from-pa": [0b00110000],
+    "from-ioa": [0b00110010],
     "inc": [0b00110001],
-    "to-ioa": [0b00110010],
-    "to-iob": [0b00110011],
-    "to-ioc": [0b00110100],
     "bcd": [0b00110110],
     "shutdown": [0b00110111, 0b00111110],
-    "timer-start": [0b00111000],
-    "timer-end": [0b00111001],
-    "from-timerl": [0b00111010],
-    "from-timerh": [0b00111011],
-    "to-timerl": [0b00111100],
-    "to-timerh": [0b00111101],
     "nop": [0b00111110],
     "dec": [0b00111111],
 
@@ -60,7 +48,6 @@ instruction_encodings = {
     "xor": [0b01000011],
     "or": [0b01000100],
     "r4": [0b01000110],
-    "timer": [0b01000111],
 
     # "rarb <imm>2x": [0b0101XXXX, '0000YYYY'],
 
@@ -88,7 +75,7 @@ special_patterns = ["rarb", "rcrd", "acc", "b-bit",
 
 reg_patterns = ["inc*-reg", "dec*-reg", "to-reg", "from-reg"]
 
-register_names = ["RA", "RB", "RC", "RD", "RE", "RF"]
+register_names = ["RA", "RB", "RC", "RD", "RE"]
 
 
 # assumes s is in binary format and converts it to clean machine code
