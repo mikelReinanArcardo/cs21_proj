@@ -20,6 +20,10 @@ if __name__ == "__main__":
         for i, line in enumerate(f):
             instr = line.strip().split(" ")
 
+            # debugging
+            # if (120 <= pc <= 144):
+            #     print("pc", pc, instr)
+
             # if whiteline or comment
             if not instr[0] or instr[0][0] in ["#", ";"]:
                 continue
@@ -32,7 +36,7 @@ if __name__ == "__main__":
                     labels[label] = bin(pc)[2:].zfill(8)
                 pc += 2
 
-            elif instr[0] in branch_instr and not instr[1].isdigit():
+            elif instr[0] in branch_instr and not instr[-1].isdigit():
                 pc += 2
 
             elif instr[0] == ".byte":
@@ -61,16 +65,16 @@ if __name__ == "__main__":
                 # set to unused machine code
                 machine_code = ["01001000"]
                 label = instr[0][:-1].lower()
-                machine_code.append(labels[label])
+                machine_code.append(labels[label][-8:])
 
             # convert labels to immediate for branch instructions
-            elif instr[0] in branch_instr and not instr[1].isdigit():
-                print(instr)
-                label = instr[1].lower()
+            elif instr[0] in branch_instr and not instr[-1].isdigit():
+                # print(instr)
+                label = instr[-1].lower()
                 if label not in labels:
                     raise SyntaxError(f"{label} is an unknown label")
-                instr[1] = str(int(labels[label], 2))
-                print(instr)
+                instr[-1] = str(int(labels[label], 2))
+                # print(instr)
                 machine_code = convert_inst(instr)
 
             # .byte directive
@@ -90,6 +94,8 @@ if __name__ == "__main__":
                 else:
                     output.append(mcl)
 
+    # for key, value in labels.items():
+    #     print(key+":", int(value, 2))
     output_filename = input_filename[:input_filename.index(".")] + ".txt"
     with open(output_filename, "w") as f:
         for line in output:
