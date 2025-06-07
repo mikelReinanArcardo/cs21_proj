@@ -16,6 +16,7 @@
 	# MEM[63]- temp storage of new head specific LED
 	# MEM[64] - MEM[65] - temp storage when moving snake component
 	# MEM[66]- temp storage of moving snake component specific LED
+	# MEM[67]- temp storage of address grid row
 
 # Initialize Stuff
 	# Snake Length
@@ -59,6 +60,130 @@ to-mba
 acc 5
 rarb 53
 to-mba
+
+# Set ROW indices of addresses, and store them in addr - 64.
+# e.g. 192: 128, 193: 129, ...
+# row 0
+	acc 0
+	rarb 128
+	to-mba
+	rarb 129
+	to-mba
+	rarb 130
+	to-mba
+	rarb 131
+	to-mba
+	rarb 132
+	to-mba
+# row 1
+	acc 1
+	rarb 133
+	to-mba
+	rarb 134
+	to-mba
+	rarb 135
+	to-mba
+	rarb 136
+	to-mba
+	rarb 137
+	to-mba
+# row 2
+	acc 2
+	rarb 138
+	to-mba
+	rarb 139
+	to-mba
+	rarb 140
+	to-mba
+	rarb 141
+	to-mba
+	rarb 142
+	to-mba
+# row 3
+	acc 3
+	rarb 143
+	to-mba
+	rarb 144
+	to-mba
+	rarb 145
+	to-mba
+	rarb 146
+	to-mba
+	rarb 147
+	to-mba
+# row 4
+	acc 4
+	rarb 148
+	to-mba
+	rarb 149
+	to-mba
+	rarb 150
+	to-mba
+	rarb 151
+	to-mba
+	rarb 152
+	to-mba
+# row 5
+	acc 5
+	rarb 153
+	to-mba
+	rarb 154
+	to-mba
+	rarb 155
+	to-mba
+	rarb 156
+	to-mba
+	rarb 157
+	to-mba
+# row 6
+	acc 6
+	rarb 158
+	to-mba
+	rarb 159
+	to-mba
+	rarb 160
+	to-mba
+	rarb 161
+	to-mba
+	rarb 162
+	to-mba
+# row 7
+	acc 7
+	rarb 163
+	to-mba
+	rarb 164
+	to-mba
+	rarb 165
+	to-mba
+	rarb 166
+	to-mba
+	rarb 167
+	to-mba
+# row 8
+	acc 8
+	rarb 168
+	to-mba
+	rarb 169
+	to-mba
+	rarb 170
+	to-mba
+	rarb 171
+	to-mba
+	rarb 172
+	to-mba
+# row 8
+	acc 9
+	rarb 173
+	to-mba
+	rarb 174
+	to-mba
+	rarb 175
+	to-mba
+	rarb 176
+	to-mba
+	rarb 177
+	to-mba
+
 
 # coordinates of the head
 # self.snake_coords[0][0] = 6
@@ -293,7 +418,6 @@ beqz go_right
 ; b-bit 2 go_left
 ; b-bit 3 go_right
 
-# TODO: MIGHT BE PROBLEMATIC SINCE GRID CHANGED
 go_up:
 rarb 61
 # suppose head is at addr x, to go up we subtract x by 5
@@ -372,10 +496,84 @@ b check_collision
 
 check_collision:
 # TODO
+# MEM[61]-MEM[62] and MEM[63] currently contains the information of the next head
+
+# BORDER COLLISION
+	# vertical - just check if addr is < 192 or > 241
+vertical_check:
+	rcrd 61
+	from-mdc
+	to-reg ra
+	rcrd 62
+	from-mdc
+	to-reg rb
+	# if upper bits < 1100, it's mem addr is less than 192
+	from-reg rb
+	rot-r
+	rot-r
+	sub 3
+	bnez did_collide
+	# if upper bits is < 1111 then fs within range 
+	from-reg rb
+	sub 15
+	bnez horizontal_check
+	# otherwise check if yung lower nibble > 1
+	from-reg ra
+	rot-r
+	bnez did_collide
+
+	# horizontal - since we listed the rows of every address, just check if 
+	# the orientation is horizontal, and new head has different row index
+	# than curr head. There is a horizontal collision
+horizontal_check:
+	# get orientation
+	rarb 48
+	from-mba
+	rot-r
+	rot-r
+	beqz self_check
+	# get new head
+	rarb 61
+	from-mba
+	to-reg rc
+	rarb 62
+	from-mba
+	sub 4
+	to-reg rd
+	# MEM[rdrc] or from-mdc contains row index of next head
+	# store it to MEM[67]
+	rarb 67
+	from-mdc
+	to-mba
+	# get curr head
+	rarb 1
+	from-mba
+	to-reg rc
+	rarb 2
+	from-mba
+	sub 4
+	to-reg rd
+	# compare acc (curr head index) - MEM[67] (next) head
+	from-mdc
+	rarb 67
+	sub-mba
+	# if acc is zero then we good, if not nag overflow siya
+	bnez did_collide
+
+self_check:
+# SELF COLLISION
+	# calls a function that goes through each snake segment and checks if its the same
+
+# FOOD COLLISION
+
 b move_snake
 
 did_collide:
-# TODO
+# Set is_alive to 0
+rarb 54
+acc 0
+to-mba
+b loop
 
 
 # FUNCTIONS

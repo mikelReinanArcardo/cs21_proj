@@ -97,7 +97,7 @@ class Emulator:
 
     def draw(self):
         # self.update_grid()
-        pyxel.cls(0)
+        # pyxel.cls(0)
         mem = self.program.mem
 
         # Draw game border (20x10 grid)
