@@ -427,21 +427,7 @@ move_snake:
 	from-mdc
 	or*-mba
 
-	; call move_tmp
-	rarb 64
-	from-mba
-	rarb 61
-	to-mba
-
-	rarb 65
-	from-mba
-	rarb 62
-	to-mba
-
-	rarb 66
-	from-mba
-	rarb 63
-	to-mba
+	call move_tmp
 
 # component 1
 	# store information to MEM[64]-MEM[65] and MEM[66]
@@ -487,21 +473,7 @@ move_snake:
 	from-mdc
 	or*-mba
 
-	; call move_tmp
-	rarb 64
-	from-mba
-	rarb 61
-	to-mba
-
-	rarb 65
-	from-mba
-	rarb 62
-	to-mba
-
-	rarb 66
-	from-mba
-	rarb 63
-	to-mba
+	call move_tmp
 
 # component 2
 	# store old information to MEM[64]-MEM[65] and MEM[66]
@@ -547,21 +519,7 @@ move_snake:
 	from-mdc
 	or*-mba
 
-	; call move_tmp
-	rarb 64
-	from-mba
-	rarb 61
-	to-mba
-
-	rarb 65
-	from-mba
-	rarb 62
-	to-mba
-
-	rarb 66
-	from-mba
-	rarb 63
-	to-mba
+	call move_tmp
 
 done_move:
 	# Remove snake tail 
