@@ -10,22 +10,20 @@ class Emulator:
         # Arch-242 program
         self.program = Program(instructions)
         # TEMPORARY: assign snake head
-        # self.program.mem[200] = 0b00001110
+        # self.program.mem[218] = 0b00001110
 
-        self.grid = [[0]*10 for _ in range(20)]
-
-        pyxel.init(22*self.blocksize, 26*self.blocksize)
+        pyxel.init(26*self.blocksize, 16*self.blocksize, fps=1500)
 
         pyxel.cls(0)
-        self.program.run()
+        # self.program.run()
 
         pyxel.run(self.update, self.draw)
 
     def update_grid(self):
-        for y in range(3, 23):
-            for x in range(6, 16):
+        for y in range(3, 13):
+            for x in range(3, 23):
                 # get address line
-                offset = (y-3) * 10 + (x-6)
+                offset = (y-3) * 20 + (x-3)
                 addr = 192 + offset // 4
 
                 # get shift
@@ -36,98 +34,66 @@ class Emulator:
                            self.blocksize, self.blocksize, color)
 
     def get_input(self):
-        if pyxel.btnp(pyxel.KEY_RIGHT):
+        if pyxel.btn(pyxel.KEY_RIGHT):
             self.program.ioa |= 0b1000
-        if pyxel.btnp(pyxel.KEY_LEFT):
+        if pyxel.btn(pyxel.KEY_LEFT):
             self.program.ioa |= 0b0100
-        if pyxel.btnp(pyxel.KEY_DOWN):
+        if pyxel.btn(pyxel.KEY_DOWN):
             self.program.ioa |= 0b0010
-        if pyxel.btnp(pyxel.KEY_UP):
+        if pyxel.btn(pyxel.KEY_UP):
             self.program.ioa |= 0b0001
 
+    def snake_orientation(self):
+        d = self.program.mem[48]
+        if d & 0b1:
+            return f"up, {d}"
+        if d & 0b10:
+            return f"down, {d}"
+        if d & 0b100:
+            return f"left, {d}"
+        if d & 0b1000:
+            return f"right, {d}"
+
+    def next_snake_orientation(self):
+        d = self.program.mem[60]
+        if d & 0b1:
+            return f"up, {d}"
+        if d & 0b10:
+            return f"down, {d}"
+        if d & 0b100:
+            return f"left, {d}"
+        if d & 0b1000:
+            return f"right, {d}"
+
+    def print_mem(self):
+        print(f"at pc {self.program.pc}:")
+        for i, row in enumerate(self.program.mem):
+            print(f"row {i}:", bin(row))
+
+        print()
+
     def update(self):
-        self.get_input()
+        # for debugging: slower ticks
+        if self.program.pc < 2*len(self.program.instr_mem):
+            self.program.run_instr()
+            self.program.iterate_pc()
+            # self.print_mem()
+            # print(self.program.ioa)
+            print("curr snake orientation", self.snake_orientation())
+            print("next snake orientation", self.next_snake_orientation())
+
+            # pc of game tick
+            if self.program.pc == 126:
+                # reset ioa
+                self.program.ioa = 0
+                self.get_input()
+
+            if self.program.shutdown:
+                pyxel.cls(1)
 
         # temp
         if self.program.shutdown:
             print("SHUTDOWN")
-
-        # should reset every tick
-        # print(self.program.ioa)
-
-        # if not self.dead:
-        #     self.timer += 1
-        #
-        #     if self.timer % 25 == 0 and not self.has_food:
-        #         new_x = randint(0, 9)
-        #         new_y = randint(0, 19)
-        #         while self.grid[new_y][new_x] == 1:
-        #             new_x = randint(0, 9)
-        #             new_y = randint(0, 19)
-        #
-        #         self.has_food = True
-        #         self.food_x = new_x
-        #         self.food_y = new_y
-        #         self.grid[self.food_y][self.food_x] = 1
-        #
-        #     if self.timer % 5 == 0:
-        #         self.grid[self.snake_coords[-1][1]
-        #                   ][self.snake_coords[-1][0]] = 0
-        #
-        #         self.orientation = self.next_orientation if self.next_orientation > - \
-        #             1 else self.orientation
-        #
-        #         x, y = self.snake_coords[0][0], self.snake_coords[0][1]
-        #         if self.orientation == 0:
-        #             x -= 1
-        #         elif self.orientation == 1:
-        #             y -= 1
-        #         elif self.orientation == 2:
-        #             x += 1
-        #         elif self.orientation == 3:
-        #             y += 1
-        #
-        #         # out of bounds
-        #         if not (0 <= x < 10) or not (0 <= y < 20):
-        #             pyxel.cls(1)
-        #             self.dead = True
-        #             self.grid = [[0]*10 for _ in range(20)]
-        #             pyxel.text(11*self.blocksize, 13 *
-        #                        self.blocksize, "Game Over", 2)
-        #             return
-        #
-        #         # if it touches itself
-        #         for x2, y2 in self.snake_coords:
-        #             if x == x2 and y == y2:
-        #                 pyxel.cls(1)
-        #                 self.dead = True
-        #                 self.grid = [[0]*10 for _ in range(20)]
-        #                 pyxel.text(11*self.blocksize, 13 *
-        #                            self.blocksize, "Game Over", 2)
-        #                 return
-        #
-        #         # if touches food
-        #         if x == self.food_x and y == self.food_y:
-        #             self.has_food = False
-        #             self.grid[self.food_y][self.food_x] = 0
-        #             self.snake_coords.append([-1, -1])
-        #             self.len += 1
-        #
-        #         # change snake coords
-        #         for i in range(self.len-1, 0, -1):
-        #             self.snake_coords[i][0] = self.snake_coords[i-1][0]
-        #             self.snake_coords[i][1] = self.snake_coords[i-1][1]
-        #
-        #         self.snake_coords[0][0], self.snake_coords[0][1] = x, y
-        #
-        #         for x, y in self.snake_coords:
-        #             self.grid[y][x] = 1
-        #
-        #             self.next_orientation = -1
-        #
-        # else:
-        #     if pyxel.btnp(pyxel.KEY_R):
-        #         self.init_game()
 
     def draw(self):
         self.update_grid()
