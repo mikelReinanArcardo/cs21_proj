@@ -38,10 +38,6 @@ class Program:
             self.run_instr()
             self.iterate_pc()
 
-            # for debugging
-            # print("pc:", self.pc)
-            # print("acc:", self.acc)
-
             if self.shutdown:
                 break
 
@@ -374,55 +370,3 @@ class Program:
         self.is_branch = False
         self.next_pc = 1
         self.is_label = False
-
-        # for debugging
-        # print(self.acc)
-        # print(self.reg)
-        # print()
-
-# test = Program([])
-# print(test.acc)
-# test.decode("00000101")
-# print(test.acc)
-# test.decode("00000001")
-# print(test.acc)
-# test.decode("00000000")
-# print(test.acc)
-# test.decode("00000010")
-# print(test.acc)
-# print(test.cf)
-# test.decode("00000011")
-# print(test.acc)
-# print(test.cf)
-# test.decode("00000100")
-# print(test.acc)
-
-# -- Sub Test --
-# test.decode("00000101")  # MEM[rb:ra] = acc
-# print(test.acc)
-# test.acc = 4  # 0b0100
-# acc = acc - mem[rb:ra] + cf = 0b0100 - 0b1111 + 0b0 = 0b10101 -> 0b0101 = 5
-# cf = 1
-# test.decode("00001010")
-# print(test.acc)
-# print(test.cf)
-
-# -- Test 3--
-# (test.decode("00011100"))
-# (test.decode("00010000"))
-# (test.decode("00010010"))
-# (test.decode("00010100"))
-# (test.decode("00010110"))
-# (test.decode("00011000"))
-# (test.decode("00011010"))
-
-# -- Test 4 --
-# test.decode("01000000")
-# test.decode("01000011")
-# print(test.acc)
-# test.decode("01000000")
-# test.decode("00000011")
-# print(test.acc)
-# test.decode("01000001")
-# test.decode("00000011")
-# print(test.acc)

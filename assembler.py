@@ -65,12 +65,10 @@ if __name__ == "__main__":
 
             # convert labels to immediate for branch instructions
             elif instr[0] in branch_instr and not instr[1].isdigit():
-                print(instr)
                 label = instr[1].lower()
                 if label not in labels:
                     raise SyntaxError(f"{label} is an unknown label")
                 instr[1] = str(int(labels[label], 2))
-                print(instr)
                 machine_code = convert_inst(instr)
 
             # .byte directive
