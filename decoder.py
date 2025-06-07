@@ -150,9 +150,11 @@ class Program:
 
             # call
             elif self.last_instr[:4] == "1111":
-                self.temp = self.pc + 2
+                # although this should be +2, nabawasan di kasi accounted for
+                # yung unang part ng machine code nito kaya +1 lang
+                self.temp = (self.pc + 1) & 0b1111111111111111
                 b = self.last_instr[4:]
-                imm = int(b+instr, 2)
+                imm = int(b+instr, 2) & 0b0000111111111111
                 tmp = self.pc & 0b1111000000000000
                 self.next_pc = tmp | imm
                 self.jump = True
@@ -339,10 +341,9 @@ class Program:
                 # get first 4 bits
                 four_bits = self.pc & 0b1111000000000000
                 twelve_bits = self.temp & 0b0000111111111111
-                self.pc = four_bits | twelve_bits
+                # Since may pc + 1 pa after neto, may offset na -1
+                self.pc = ((four_bits | twelve_bits) - 1) & 0b1111111111111111
                 self.temp = 0b0000000000000000
-                self.jump = True
-                return
 
             # from-ioa
             elif instr == "00110010":
@@ -398,7 +399,6 @@ class Program:
         self.is_imm = False
         self.last_instr = ""
         self.is_branch = False
-        self.next_pc = 1
         self.is_label = False
 
 
