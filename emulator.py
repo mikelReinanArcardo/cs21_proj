@@ -12,7 +12,7 @@ class Emulator:
         # TEMPORARY: assign snake head
         # self.program.mem[218] = 0b00001110
 
-        pyxel.init(26*self.blocksize, 16*self.blocksize, fps=1500)
+        pyxel.init(22*self.blocksize, 16*self.blocksize, fps=2400)
 
         pyxel.cls(0)
         # self.program.run()
@@ -21,9 +21,9 @@ class Emulator:
 
     def update_grid(self):
         for y in range(3, 13):
-            for x in range(3, 23):
+            for x in range(1, 21):
                 # get address line
-                offset = (y-3) * 20 + (x-3)
+                offset = (y-3) * 20 + (x-1)
                 addr = 192 + offset // 4
 
                 # get shift
@@ -79,8 +79,8 @@ class Emulator:
             self.program.iterate_pc()
             # self.print_mem()
             # print(self.program.ioa)
-            print("curr snake orientation", self.snake_orientation())
-            print("next snake orientation", self.next_snake_orientation())
+            # print("curr snake orientation", self.snake_orientation())
+            # print("next snake orientation", self.next_snake_orientation())
 
             # pc of game tick
             if self.program.pc == 126:
@@ -96,7 +96,74 @@ class Emulator:
             print("SHUTDOWN")
 
     def draw(self):
-        self.update_grid()
+        # self.update_grid()
+        pyxel.cls(0)
+        mem = self.program.mem
+
+        # Draw game border (20x10 grid)
+        border_color = 8  # Red
+        pyxel.rectb(1*self.blocksize, 3*self.blocksize,
+                    20*self.blocksize, 10*self.blocksize, border_color)
+
+        # Draw grid lines (visual debugging)
+        grid_color = 13  # Light gray
+        # Vertical lines
+        for x in range(20):
+            pyxel.line((x+1)*self.blocksize, 3*self.blocksize,
+                       (x+1)*self.blocksize, (10+3)*self.blocksize, grid_color)
+        # Horizontal lines
+        for y in range(10):
+            pyxel.line(1*self.blocksize, (y+3)*self.blocksize,
+                       (20+1)*self.blocksize, (y+3)*self.blocksize, grid_color)
+
+        # Draw coordinate labels
+        label_color = 7  # White
+        for x in range(20):
+            pyxel.text((x+1)*self.blocksize + 2, 3 *
+                       self.blocksize - 10, str(x), label_color)
+        for y in range(10):
+            pyxel.text(1*self.blocksize - 15, (y+3) *
+                       self.blocksize + 5, str(y), label_color)
+
+        for y in range(3, 13):
+            for x in range(1, 21):
+                # get address line
+                offset = (y-3) * 20 + (x-1)
+                addr = 192 + offset // 4
+
+                # get shift
+                k = offset % 4
+
+                def concat(lower, upper):
+                    print(int(bin(upper)[2:]+bin(lower)[2:], 2))
+                    return int(bin(upper)[2:]+bin(lower)[2:], 2)
+
+                # if has data (snake or fruit)
+                if mem[addr] >> k & 0b1 == 1:
+                    is_head = True if addr == concat(
+                        mem[1], mem[2]) and mem[33] == pow(2, k) else False
+                    is_fruit = True if addr == concat(
+                        mem[50], mem[51]) and mem[52] == pow(2, k) else False
+
+                    color = 8 if is_head else 9 if is_fruit else 11
+                # else:
+                #     color = 0
+
+                    # Draw segment
+                    pyxel.rect(
+                        x*self.blocksize,
+                        y*self.blocksize,
+                        self.blocksize-2,
+                        self.blocksize-2,
+                        color
+                    )
+
+        # Debug info overlay
+        direction_names = {8: "RIGHT", 4: "LEFT", 2: "DOWN", 1: "UP"}
+        pyxel.text(5, 5, f"Head: ({mem[1]},{mem[2]})", 7)
+        pyxel.text(5, 15, f"Food: ({mem[50]},{mem[51]})", 7)
+        dir = f"Facing: {direction_names.get(mem[48], 'UNKNOWN')}"
+        pyxel.text(5, 25, dir, 7)
 
 
 if __name__ == "__main__":
