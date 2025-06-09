@@ -714,7 +714,7 @@ eat_food:
 	to-mba
 
 	rarb 42
-	acc 2
+	acc 3
 	to-mba
 
 	rarb 40

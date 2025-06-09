@@ -1,18 +1,20 @@
 import os
-import pyxel
+import pyxel  # type: ignore
 from decoder import Program
 
 
 class Emulator:
     def __init__(self, instructions):
         self.blocksize = 16
+        self.offset_y = 1  # shift game down by 1 block (16px)
         self.instructions = instructions
         # Arch-242 program
         self.program = Program(instructions)
         # TEMPORARY: assign snake head
         # self.program.mem[218] = 0b00001110
 
-        pyxel.init(22*self.blocksize, 16*self.blocksize, fps=75000)
+        pyxel.init(22*self.blocksize, (16 + self.offset_y)
+                   * self.blocksize, fps=80000)
 
         pyxel.cls(0)
         # self.program.run()
@@ -25,15 +27,11 @@ class Emulator:
     def update_grid(self):
         for y in range(3, 13):
             for x in range(1, 21):
-                # get address line
                 offset = (y-3) * 20 + (x-1)
                 addr = 192 + offset // 4
-
-                # get shift
                 k = offset % 4
-
                 color = 9 if self.program.mem[addr] >> k & 0b1 == 1 else 7
-                pyxel.rect(x*self.blocksize, y*self.blocksize,
+                pyxel.rect(x*self.blocksize, (y+self.offset_y)*self.blocksize,
                            self.blocksize, self.blocksize, color)
 
     def get_input(self):
@@ -72,48 +70,27 @@ class Emulator:
         print(f"at pc {self.program.pc}:")
         for i, row in enumerate(self.program.mem):
             print(f"row {i}:", bin(row))
-
         print()
 
     def game_over(self):
-        # shows a game over screen
         pyxel.cls(1)
-        pyxel.text(10*self.blocksize + 4, 7 *
-                   self.blocksize + 8, "GAME OVER!", 7)
-        pyxel.text(9*self.blocksize, 10 *
-                   self.blocksize + 8, "Press 'R' to Restart", 7)
-
+        pyxel.text(9*self.blocksize + 3, (6 + self.offset_y)
+                   * self.blocksize + 5, "GAME OVER!", 7)
+        pyxel.text(8*self.blocksize, (8 + self.offset_y) *
+                   self.blocksize + 5, "Press 'R' to Restart", 7)
         state = "You Win" if self.program.mem[90] else "You Lose"
-        pyxel.text(10*self.blocksize + 8, 6 *
-                   self.blocksize + 8, state, 7)
-
-    def concat(self, ra: int, rb: int):
-        return int(bin(rb)[2:].zfill(4)[-4:] + bin(ra)[2:].zfill(4)[-4:], 2)
+        pyxel.text(9*self.blocksize + 6, (5 + self.offset_y)
+                   * self.blocksize + 5, state, 7)
 
     def update(self):
-        # for debugging: slower ticks
         if not self.program.shutdown and self.program.pc < 2*len(self.program.instr_mem):
             self.ticks += 1
             self.program.run_instr()
             self.program.iterate_pc()
-            # self.print_mem()
-            # print(self.program.ioa)
-            # print("curr snake orientation", self.snake_orientation())
-            # print("next snake orientation", self.next_snake_orientation())
-            # print("randomly generated address:", self.concat(
-            #     self.program.mem[68], self.program.mem[69]))
-            # print("randomly generated food LED location:",
-            #       self.program.mem[70])
-            print("snake length:", self.program.mem[40])
-            # print("snake head location:", self.concat(
-            #     self.program.mem[1], self.program.mem[2]), "=", self.program.mem[33])
 
-            if self.ticks % 200:
-                # reset ioa
+            if self.ticks % 20:
                 self.program.ioa = 0
                 self.get_input()
-
-        # Game over
         else:
             if pyxel.btn(pyxel.KEY_R):
                 self.program = Program(self.instructions)
@@ -125,59 +102,44 @@ class Emulator:
             pyxel.cls(0)
             mem = self.program.mem
 
-            # Draw game border (20x10 grid)
-            border_color = 8  # Red
-            pyxel.rectb(1*self.blocksize, 3*self.blocksize,
-                        20*self.blocksize, 10*self.blocksize, border_color)
-
-            # Draw grid lines (visual debugging)
+            # Draw grid lines
             grid_color = 13  # Light gray
-            # Vertical lines
-            for x in range(20):
-                pyxel.line((x+1)*self.blocksize, 3*self.blocksize,
-                           (x+1)*self.blocksize, (10+3)*self.blocksize, grid_color)
-            # Horizontal lines
-            for y in range(10):
-                pyxel.line(1*self.blocksize, (y+3)*self.blocksize,
-                           (20+1)*self.blocksize, (y+3)*self.blocksize, grid_color)
+            for x in range(21):
+                pyxel.line((x+1)*self.blocksize, (3+self.offset_y)*self.blocksize,
+                           (x+1)*self.blocksize, (10+3+self.offset_y)*self.blocksize, grid_color)
+            for y in range(11):
+                pyxel.line(1*self.blocksize, (y+3+self.offset_y)*self.blocksize,
+                           (20+1)*self.blocksize, (y+3+self.offset_y)*self.blocksize, grid_color)
 
             # Draw coordinate labels
             label_color = 7  # White
             for x in range(20):
-                pyxel.text((x+1)*self.blocksize + 2, 3 *
-                           self.blocksize - 10, str(x), label_color)
+                pyxel.text((x+1)*self.blocksize + 2, (3+self.offset_y)*self.blocksize - 10,
+                           str(x), label_color)
             for y in range(10):
-                pyxel.text(1*self.blocksize - 15, (y+3) *
-                           self.blocksize + 5, str(y), label_color)
+                pyxel.text(1*self.blocksize - 15, (y+3+self.offset_y)*self.blocksize + 5,
+                           str(y), label_color)
 
             for y in range(3, 13):
                 for x in range(1, 21):
-                    # get address line
                     offset = (y-3) * 20 + (x-1)
                     addr = 192 + offset // 4
-
-                    # get shift
                     k = offset % 4
 
                     def concat(lower, upper):
                         return int(bin(upper)[2:].zfill(
-                            4)[-4:]+bin(lower)[2:].zfill(4)[-4:], 2)
+                            4)[-4:] + bin(lower)[2:].zfill(4)[-4:], 2)
 
-                    # if has data (snake or fruit)
                     if mem[addr] >> k & 0b1 == 1:
                         is_head = True if addr == concat(
                             mem[1], mem[2]) and mem[97] == pow(2, k) else False
                         is_fruit = True if addr == concat(
                             mem[50], mem[51]) and mem[52] == pow(2, k) else False
-
                         color = 8 if is_head else 9 if is_fruit else 11
-                    # else:
-                    #     color = 0
 
-                        # Draw segment
                         pyxel.rect(
                             x*self.blocksize,
-                            y*self.blocksize,
+                            (y + self.offset_y)*self.blocksize,
                             self.blocksize-2,
                             self.blocksize-2,
                             color
@@ -185,10 +147,25 @@ class Emulator:
 
             # Debug info overlay
             direction_names = {8: "RIGHT", 4: "LEFT", 2: "DOWN", 1: "UP"}
-            pyxel.text(5, 5, f"Head: ({mem[1]},{mem[2]})", 7)
-            pyxel.text(5, 15, f"Food: ({mem[50]},{mem[51]})", 7)
+            head_x, head_y = mem_to_xy(mem[1], mem[2], mem[33])
+            food_x, food_y = mem_to_xy(mem[50], mem[51], mem[52])
+            pyxel.text(5, 5, f"Head: ({head_x},{head_y})", 7)
+            pyxel.text(5, 15, f"Food: ({food_x},{food_y})", 7)
             dir = f"Facing: {direction_names.get(mem[48], 'UNKNOWN')}"
             pyxel.text(5, 25, dir, 7)
+
+            score = self.program.mem[40] - 3
+            pyxel.text(5, 35, f"Score: {score}", 7)
+
+
+def mem_to_xy(low, high, bit_val):
+    addr = (high << 4) | low
+    offset = addr - 192
+    x_base = offset % 5
+    bit_index = {1: 0, 2: 1, 4: 2, 8: 3}.get(bit_val, 0)
+    x = x_base * 4 + bit_index
+    y = offset // 5
+    return x, y
 
 
 if __name__ == "__main__":
@@ -209,4 +186,4 @@ if __name__ == "__main__":
             instr = line.strip()
             machine_code_instructions.append(instr)
 
-    Emulator(machine_code_instructions)
+    Emulator(machine_code_instructions)  # import os
