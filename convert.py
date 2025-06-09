@@ -107,7 +107,7 @@ def convert_special_inst(word, instr):
     elif i == 3:
         k = bin(int(instr[1]))[2:].zfill(2)
         imm = bin(int(instr[-1]))[2:].zfill(11)
-        return [string_to_binary("110"+k[-2:]+imm[-11:-8]), string_to_binary(imm[-8:])]
+        return [string_to_binary("100"+k[-2:]+imm[-11:-8]), string_to_binary(imm[-8:])]
 
     # bnz-a
     elif i == 4:

@@ -1,9 +1,10 @@
 # Conventions
 	# use ra and rb for memory addresses
-	# MEM[0] = ticks
-	# snake length = RE
-	# snake coordinates address (Lower_Nibble-Upper_Nibble) = MEM[1]-MEM[2] to MEM[31]-MEM[32]
-	# specific snake coordinate LED = MEM[33] to MEM[47]
+	# MEM[0] = ticks / seed
+	# snake length = MEM[40]
+	# MEM[41] MEM[42] - temp storage
+	# snake coordinates address (Lower_Nibble-Upper_Nibble) = MEM[1]-MEM[2] to MEM[35]-MEM[36]
+	# specific snake coordinate LED = MEM[97] to MEM[114]
 	# orientation = MEM[48]
 	# next_orientation = ioa
 	# points = MEM[49]
@@ -17,24 +18,14 @@
 	# MEM[64] - MEM[65] - temp storage when moving snake component
 	# MEM[66]- temp storage of moving snake component specific LED
 	# MEM[67]- temp storage of address grid row
-
-# Initialize Stuff
-	# Snake Length
-	# Snake Coordinates
-	# Orientation
-	# Game Tick / Timer
-	# Points
-	# is_dead variable
-	# Food Coordinates - memory address of food coordinate
-
-# Game Loop
-# if not is_dead:
-	# tick + 1
-
-	# <movement>
-	# SUBJECT TO CHANGE: every 25 ticks check if no food yet then spawn 1
-
-
+	# MEM[68]+MEM[69]- temp storage of new food address
+	# MEM[70]- temp storage of new food LED
+	# MEM[71] - store temp subtraction values
+	# MEM[72] - i
+	# MEM[80] - temp for calculate_rc
+	# MEM[81] - temp for calculate_rd
+	# MEM[82] - temp for calculate_led
+	# MEM[90] - did win
 
 # --- ACTUAL CODE ---
 acc 0
@@ -42,7 +33,10 @@ rarb 0
 # self.timer = 0
 to-mba
 # self.len = 3
-r4 3
+; r4 3
+acc 3
+rarb 40
+to-mba
 # self.is_alive = True
 acc 1
 rarb 54
@@ -171,7 +165,7 @@ to-mba
 	to-mba
 	rarb 172
 	to-mba
-# row 8
+# row 9
 	acc 9
 	rarb 173
 	to-mba
@@ -202,7 +196,7 @@ from-reg rd
 to-mba
 # store specific head LED (1, 2, 4, or 8)
 acc 8
-rarb 33
+rarb 97
 to-mba
 
 # set body segment 1
@@ -217,7 +211,7 @@ from-reg rd
 to-mba
 # store specific LED (1, 2, 4, or 8)
 acc 4
-rarb 34
+rarb 98
 to-mba
 
 
@@ -233,7 +227,7 @@ from-reg rd
 to-mba
 # store specific LED (1, 2, 4, or 8)
 acc 2
-rarb 35
+rarb 99
 to-mba
 
 # Draw Snake
@@ -243,7 +237,7 @@ to-reg ra
 rcrd 2
 from-mdc
 to-reg rb
-rcrd 33
+rcrd 97
 from-mdc
 or*-mba
 
@@ -253,7 +247,7 @@ to-reg ra
 rcrd 4
 from-mdc
 to-reg rb
-rcrd 34
+rcrd 98
 from-mdc
 or*-mba
 
@@ -263,7 +257,7 @@ to-reg ra
 rcrd 6
 from-mdc
 to-reg rb
-rcrd 35
+rcrd 99
 from-mdc
 or*-mba
 
@@ -302,7 +296,8 @@ bnez tick
 shutdown
 
 tick:
-# TODO: if need to add other stuff before moving put it here
+rarb 0
+inc*-mba
 b move
 
 move:
@@ -320,7 +315,6 @@ rot-r
 beqz is_vertical
 b is_horizontal
 
-# NOTE: b-bit should've worked but I think my implementation is buggy
 is_vertical:
 # we know that it can only move left or right from here
 # prio right
@@ -394,7 +388,7 @@ rcrd 62
 to-mdc
 
 # get curr head LED then store in MEM[63]
-rarb 33
+rarb 97
 from-mba
 rarb 63
 to-mba
@@ -414,9 +408,6 @@ beqz go_left
 from-mba
 sub 8
 beqz go_right
-; b-bit 1 go_down
-; b-bit 2 go_left
-; b-bit 3 go_right
 
 go_up:
 rarb 61
@@ -458,7 +449,6 @@ bnez check_collision
 # pag nagzero set it to 0b1000 then move yung address - 1
 acc 8
 to-mba
-# TODO: BOUNDARY CHECKS
 rarb 61
 from-mba
 rarb 54
@@ -481,7 +471,6 @@ bnez check_collision
 
 acc 1
 to-mba
-# TODO: BOUNDARY CHECKS
 rarb 61
 from-mba
 rarb 54
@@ -495,9 +484,6 @@ inc*-mba
 b check_collision
 
 check_collision:
-# TODO
-# MEM[61]-MEM[62] and MEM[63] currently contains the information of the next head
-
 # BORDER COLLISION
 	# vertical - just check if addr is < 192 or > 241
 vertical_check:
@@ -563,10 +549,204 @@ horizontal_check:
 self_check:
 # SELF COLLISION
 	# calls a function that goes through each snake segment and checks if its the same
+	
+#	MEM[68] - lower nibble of generated part
+	rarb 61
+	from-mba
+	rarb 68
+	to-mba
+#	MEM[69] - upper nibble of generated part
+	rarb 62
+	from-mba
+	rarb 69
+	to-mba
+#	MEM[70] - specific led of generated part
+	rarb 63
+	from-mba
+	rarb 70
+	to-mba
+	b self_collision
 
+food_check:
 # FOOD COLLISION
+	# compare lower nibble
+	rarb 61
+	from-mba
+	rarb 50 
+	sub-mba
+	bnez move_snake
+	# compare upper nibble
+	rarb 62
+	from-mba
+	rarb 51 
+	sub-mba
+	bnez move_snake
+	# compare specific led
+	rarb 63
+	from-mba
+	rarb 52 
+	sub-mba
+	bnez move_snake
+	# After all checks we have confirmed that we did collide with a food
 
-b move_snake
+gen_random:
+	# randomly generate next food
+	# generate lower nibble
+	rarb 50
+	from-mba
+	rarb 0
+	xor*-mba
+
+	rarb 61
+	from-mba
+	rarb 0
+	xor*-mba
+
+	from-mba
+	rarb 68
+	to-mba
+
+	# generate upper nibble
+	rarb 51
+	from-mba
+	rarb 0
+	xor*-mba
+
+	rarb 62
+	from-mba
+	rarb 0
+	xor*-mba
+
+	from-mba
+	or 12
+	# TEMPORARY: get only upper 3 bits
+	and 14
+	# --------
+	rarb 69
+	to-mba
+
+	# generate LED
+	rarb 61
+	from-mba
+	rarb 0
+	xor*-mba
+
+	rarb 51
+	from-mba
+	rarb 0
+	xor*-mba
+
+	rarb 0
+	from-mba
+	and 3
+	beqz led1
+	sub 1
+	beqz led2
+	sub 1
+	beqz led4
+	sub 1
+	beqz led8
+
+	led1:
+		acc 1
+		b store_led
+	led2:
+		acc 2
+		b store_led
+	led4:
+		acc 4
+		b store_led
+	led8:
+		acc 8
+
+	store_led:
+		rarb 70
+		to-mba
+
+	b snake_collision
+
+eat_food:
+	# Remove eaten food 
+	rcrd 50
+	from-mdc
+	to-reg ra
+	rcrd 51
+	from-mdc
+	to-reg rb
+	rcrd 52
+	from-mdc
+	xor*-mba
+
+	# set the new food coordinates from MEM[68]-MEM[70]
+	rcrd 68
+	from-mdc
+	rarb 50
+	to-mba
+	
+	rcrd 69
+	from-mdc
+	rarb 51
+	to-mba
+
+	rcrd 70
+	from-mdc
+	rarb 52
+	to-mba
+
+	# Draw new food location
+	rcrd 50
+	from-mdc
+	to-reg ra
+	rcrd 51
+	from-mdc
+	to-reg rb
+	rcrd 52
+	from-mdc
+	or*-mba
+
+	# add 1 to length
+	rarb 40
+	inc*-mba
+
+	# check if length == 18
+	rarb 41
+	acc 1
+	to-mba
+
+	rarb 42
+	acc 2
+	to-mba
+
+	rarb 40
+	acc 0
+	add-mba
+	rot-rc
+	and 8
+	rarb 43
+	to-mba
+
+	rarb 40
+	from-mba
+	rarb 44
+	to-mba
+
+	rarb 43
+	from-mba
+	beqz move_snake
+
+	rarb 42
+	from-mba
+	rarb 44
+	sub-mba
+	bnez-cf win
+	beqz win
+
+	b move_snake
+
+win:
+rarb 90
+acc 1
+to-mba
 
 did_collide:
 # Set is_alive to 0
@@ -577,147 +757,229 @@ b loop
 
 
 # FUNCTIONS
+
 # Now the new head should be at MEM[MEM[62]:MEM[61]] and its LED mapping is at MEM[63]
 # We then start from the tail then copy its next
 # NOTE: call and ret functions are buggy
+break:
+	ret
+
+calculate_rc:
+	acc 0
+	rarb 72
+	add-mba
+	rcrd 0
+
+	# if 1 si cf (>= 16 si i) store 1 to rd:
+	beqz-cf cf_not_1_rc
+	acc 2
+	to-reg rd
+cf_not_1_rc:
+	rarb 72
+	from-mba
+	rot-lc
+	sub 1
+	to-reg rc
+	beqz-cf break 
+	add 1
+	beqz break
+	inc*-reg rd
+	ret
+
+calculate_rd:
+	acc 0
+	rarb 72
+	add-mba
+	rcrd 0
+
+	# if 1 si cf (>= 16 si i) store 1 to rd:
+	beqz-cf cf_not_1_rd
+	acc 2
+	to-reg rd
+cf_not_1_rd:
+	rarb 72
+	from-mba
+	rot-lc
+	to-reg rc
+	beqz-cf break 
+	inc*-reg rd
+	ret
+
+
+calculate_led:
+	acc 0
+	rarb 72
+	add-mba
+
+	rcrd 0
+	to-reg rc
+
+	acc 6
+	to-reg rd
+	beqz-cf break
+	inc*-reg rd
+	ret
+
+
+# TRIAL
+# MEM[72] = i
+# re cap
 move_snake:
-# head
+	# for i = 1
+	acc 0
+	rarb 72
+	to-mba
+move_snake_inner:
+	# check if i <= snake length (re)
+	# i + 1
+	rarb 72
+	inc*-mba
+	call check_length
+	bnez-cf dummy_cycles
+
+	# calculate rc, rd, and led of current iteration
+	# rc = 2*i - 1
+	# rd = 2*i
+	# led = 32 + i
+	call calculate_rc
+	from-reg rc
+	rarb 80
+	to-mba
+	from-reg rd
+	rarb 81
+	to-mba
+
+	call calculate_rd
+	from-reg rc
+	rarb 82
+	to-mba
+	from-reg rd
+	rarb 83
+	to-mba
+
+	call calculate_led
+	from-reg rc
+	rarb 84
+	to-mba
+	from-reg rd
+	rarb 85
+	to-mba
+
 	# store information to MEM[64]-MEM[65] and MEM[66]
-	rarb 1
+	rcrd 80
+	from-mdc
+	to-reg ra
+	rcrd 81
+	from-mdc
+	to-reg rb
 	from-mba
+
 	rarb 64
 	to-mba
 
-	rarb 2
+	rcrd 82
+	from-mdc
+	to-reg ra
+	rcrd 83
+	from-mdc
+	to-reg rb
 	from-mba
+
 	rarb 65
 	to-mba
 
-	rarb 33
+	rcrd 84
+	from-mdc
+	to-reg ra
+	rcrd 85
+	from-mdc
+	to-reg rb
 	from-mba
+
 	rarb 66
 	to-mba
 
 	# copy from MEM[61]-MEM[62] and MEM[63]
-	rarb 61
-	from-mba
-	rarb 1
-	to-mba
 
-	rarb 62
-	from-mba
-	rarb 2
-	to-mba
-
-	rarb 63
-	from-mba
-	rarb 33
-	to-mba
-
-	# Draw Snake
-	rcrd 1
+	rcrd 80
 	from-mdc
 	to-reg ra
-	rcrd 2
+	rcrd 81
 	from-mdc
 	to-reg rb
-	rcrd 33
+	rcrd 61
+	from-mdc
+	to-mba
+
+
+	rcrd 82
+	from-mdc
+	to-reg ra
+	rcrd 83
+	from-mdc
+	to-reg rb
+	rcrd 62
+	from-mdc
+	to-mba
+
+
+	rcrd 84
+	from-mdc
+	to-reg ra
+	rcrd 85
+	from-mdc
+	to-reg rb
+	rcrd 63
+	from-mdc
+	to-mba
+
+	# MEM[86] - to-reg ra
+	# MEM[87] - to-reg rb
+	# MEM[88] - led
+	# Draw Snake
+	rcrd 80
+	from-mdc
+	to-reg ra
+	rcrd 81
+	from-mdc
+	to-reg rb
+	from-mba
+	rarb 86
+	to-mba
+
+	rcrd 82
+	from-mdc
+	to-reg ra
+	rcrd 83
+	from-mdc
+	to-reg rb
+	from-mba
+	rarb 87
+	to-mba
+
+	rcrd 84
+	from-mdc
+	to-reg ra
+	rcrd 85
+	from-mdc
+	to-reg rb
+	from-mba
+	rarb 88
+	to-mba
+
+	rcrd 86
+	from-mdc
+	to-reg ra
+	rcrd 87
+	from-mdc
+	to-reg rb
+	rcrd 88
 	from-mdc
 	or*-mba
 
 	call move_tmp
 
-# component 1
-	# store information to MEM[64]-MEM[65] and MEM[66]
-	rarb 3
-	from-mba
-	rarb 64
-	to-mba
-
-	rarb 4
-	from-mba
-	rarb 65
-	to-mba
-
-	rarb 34
-	from-mba
-	rarb 66
-	to-mba
-
-	# copy from MEM[61]-MEM[62] and MEM[63]
-	rarb 61
-	from-mba
-	rarb 3
-	to-mba
-
-	rarb 62
-	from-mba
-	rarb 4
-	to-mba
-
-	rarb 63
-	from-mba
-	rarb 34
-	to-mba
-
-	# Draw Snake
-	rcrd 3
-	from-mdc
-	to-reg ra
-	rcrd 4
-	from-mdc
-	to-reg rb
-	rcrd 34
-	from-mdc
-	or*-mba
-
-	call move_tmp
-
-# component 2
-	# store old information to MEM[64]-MEM[65] and MEM[66]
-	rarb 5
-	from-mba
-	rarb 64
-	to-mba
-
-	rarb 6
-	from-mba
-	rarb 65
-	to-mba
-
-	rarb 35
-	from-mba
-	rarb 66
-	to-mba
-
-	# copy from MEM[61]-MEM[62] and MEM[63]
-	rarb 61
-	from-mba
-	rarb 5
-	to-mba
-
-	rarb 62
-	from-mba
-	rarb 6
-	to-mba
-
-	rarb 63
-	from-mba
-	rarb 35
-	to-mba
-
-	# Draw Snake
-	rcrd 5
-	from-mdc
-	to-reg ra
-	rcrd 6
-	from-mdc
-	to-reg rb
-	rcrd 35
-	from-mdc
-	or*-mba
-
-	call move_tmp
+	b move_snake_inner
 
 done_move:
 	# Remove snake tail 
@@ -732,9 +994,6 @@ done_move:
 	xor*-mba
 	b loop
 
-# TODO: do the same for components 3-14
-
-# TODO: may mali sa either call or ret function implementation
 # when moving snake it moves MEM[64]-MEM[66] to MEM[61]-MEM[63]
 move_tmp:
 	rarb 64
@@ -752,3 +1011,899 @@ move_tmp:
 	rarb 63
 	to-mba
 	ret
+
+# params acc - length
+# return set cf - 0 if snake length < acc else 1
+check_length:
+	; compute upper(i)
+	rarb 72
+	acc 0
+	add-mba
+	rarb 41
+	to-mba
+	rot-rc
+	and 8
+	rarb 42
+	to-mba
+
+	; compute upper(snake_length)
+	rarb 40
+	acc 0
+	add-mba
+	rarb 43
+	to-mba
+	rot-rc
+	and 8
+	rarb 44
+	to-mba
+
+	; compare upper: acc = snake_upper - i_upper
+	rarb 44
+	from-mba
+	rarb 42
+	sub-mba
+
+	; if i_upper > snake_upper, cf = 1 → break
+	bnez-cf break
+	; if i_upper == snake_upper → check lower nibble
+	beqz check_lower
+	ret
+
+check_lower:
+	rarb 43
+	from-mba
+	rarb 41
+	sub-mba
+	; if i_lower > snake_lower, cf = 1 → break
+	ret
+
+# params: 
+#	MEM[68] - lower nibble of generated part
+#	MEM[69] - upper nibble of generated part
+#	MEM[70] - specific led of generated part
+snake_collision:
+	# LOWER NIBBLE
+	# get part
+	rarb 61
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 68
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero it is not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+
+	# UPPER NIBBLE
+	# get part
+	rarb 62
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 69
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+
+	# LED
+	# get part
+	rarb 63
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 70
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+	# Specific LED already has lights
+	b gen_random
+
+	# for i = 1
+	acc 0
+	rarb 72
+	to-mba
+snake_collision_inner:
+	# check if i <= snake length (re)
+	rarb 72
+	inc*-mba
+	call check_length
+	bnez-cf eat_food
+
+	# calculate rc, rd, and led of current iteration
+	# rc = 2*i - 1
+	# rd = 2*i
+	# led = 32 + i
+	call calculate_rc
+	from-reg rc
+	rarb 80
+	to-mba
+	from-reg rd
+	rarb 81
+	to-mba
+
+	call calculate_rd
+	from-reg rc
+	rarb 82
+	to-mba
+	from-reg rd
+	rarb 83
+	to-mba
+
+	call calculate_led
+	from-reg rc
+	rarb 84
+	to-mba
+	from-reg rd
+	rarb 85
+	to-mba
+
+	####
+	# LOWER NIBBLE
+	# get part
+	rcrd 80
+	from-mdc
+	to-reg ra
+	rcrd 81
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 68
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero it is not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+
+	# UPPER NIBBLE
+	# get part
+	rcrd 82
+	from-mdc
+	to-reg ra
+	rcrd 83
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 69
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+
+	# LED
+	# get part
+	rcrd 84
+	from-mdc
+	to-reg ra
+	rcrd 85
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 70
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf snake_collision_inner
+	bnez snake_collision_inner
+	# Specific LED already has lights
+	b gen_random
+
+self_collision:
+	# for i = 1
+	acc 0
+	rarb 72
+	to-mba
+self_collision_inner:
+	# check if i <= snake length (re)
+	rarb 72
+	inc*-mba
+	call check_length
+	bnez-cf food_check
+
+	# calculate rc, rd, and led of current iteration
+	# rc = 2*i - 1
+	# rd = 2*i
+	# led =96 + i
+	call calculate_rc
+	from-reg rc
+	rarb 80
+	to-mba
+	from-reg rd
+	rarb 81
+	to-mba
+
+	call calculate_rd
+	from-reg rc
+	rarb 82
+	to-mba
+	from-reg rd
+	rarb 83
+	to-mba
+
+	call calculate_led
+	from-reg rc
+	rarb 84
+	to-mba
+	from-reg rd
+	rarb 85
+	to-mba
+
+	####
+	# LOWER NIBBLE
+	# get part
+	rcrd 80
+	from-mdc
+	to-reg ra
+	rcrd 81
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 68
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero it is not same, go to next part
+	bnez-cf self_collision_inner
+	bnez self_collision_inner
+
+	# UPPER NIBBLE
+	# get part
+	rcrd 82
+	from-mdc
+	to-reg ra
+	rcrd 83
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 69
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf self_collision_inner
+	bnez self_collision_inner
+
+	# LED
+	# get part
+	rcrd 84
+	from-mdc
+	to-reg ra
+	rcrd 85
+	from-mdc
+	to-reg rb
+	from-mba
+	# store part
+	rarb 71
+	to-mba
+	# get generated part
+	rcrd 70
+	from-mdc
+	# sub parts
+	sub-mba
+	# if nonzero not same, go to next part
+	bnez-cf self_collision_inner
+	bnez self_collision_inner
+	# Specific LED already has lights
+	b did_collide
+
+# so that no matter the length of snake, it runs at the same speed
+dummy_cycles:
+	rarb 72
+	dec*-mba
+	# UPPER of 18
+	rarb 41
+	acc 1
+	to-mba
+	# LOWER of 18
+	rarb 42
+	acc 2
+	to-mba
+dummy_cycles_inner:
+	# upper bit ng i
+	rarb 72
+	acc 0
+	add-mba
+	rot-rc
+	and 8
+	rarb 43
+	to-mba
+
+	# lower bit ng i
+	rarb 72
+	from-mba
+	rarb 44
+	to-mba
+
+	# compare i_upper vs 18_upper
+	rarb 41
+	from-mba
+	rarb 43
+	sub-mba
+	bnez-cf done_move
+	bnez start_dummy
+
+	# upper equal → compare lower
+	rarb 42
+	from-mba
+	rarb 44
+	sub-mba
+	bnez-cf done_move
+
+
+start_dummy:
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	rarb 72
+	inc*-mba
+	b dummy_cycles_inner

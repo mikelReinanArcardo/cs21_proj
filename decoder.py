@@ -244,19 +244,19 @@ class Program:
                 concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc + self.mem[concat]
                 self.acc = res & 0b1111
-                self.cf = 0b1 if res >= 16 else 0b0
+                self.cf = 0b1 if res >= 16 or res < 0 else 0b0
             # subc-mba
             elif instr == "00001010":
                 concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc - self.mem[concat] + self.cf
                 self.acc = res & 0b1111
-                self.cf = 0b1 if res < 0 else 0b0
+                self.cf = 0b1 if res < 0 or res > 15 else 0b0
             # sub-mba
             elif instr == "00001011":
                 concat = (self.reg[1] << 4) | self.reg[0]
                 res = self.acc - self.mem[concat]
                 self.acc = res & 0b1111
-                self.cf = 0b1 if res < 0 else 0b0
+                self.cf = 0b1 if res < 0 or res > 15 else 0b0
 
             # inc*-mba
             elif instr == "00001100":
@@ -379,6 +379,7 @@ class Program:
                 self.is_imm = True
                 return
 
+            # acc
             elif instr[:4] == "0111":
                 self.acc = int(instr[4:], 2) & 0b1111
 

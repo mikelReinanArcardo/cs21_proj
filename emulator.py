@@ -12,7 +12,7 @@ class Emulator:
         # TEMPORARY: assign snake head
         # self.program.mem[218] = 0b00001110
 
-        pyxel.init(22*self.blocksize, 16*self.blocksize, fps=2400)
+        pyxel.init(22*self.blocksize, 16*self.blocksize, fps=75000)
 
         pyxel.cls(0)
         # self.program.run()
@@ -83,6 +83,13 @@ class Emulator:
         pyxel.text(9*self.blocksize, 10 *
                    self.blocksize + 8, "Press 'R' to Restart", 7)
 
+        state = "You Win" if self.program.mem[90] else "You Lose"
+        pyxel.text(10*self.blocksize + 8, 6 *
+                   self.blocksize + 8, state, 7)
+
+    def concat(self, ra: int, rb: int):
+        return int(bin(rb)[2:].zfill(4)[-4:] + bin(ra)[2:].zfill(4)[-4:], 2)
+
     def update(self):
         # for debugging: slower ticks
         if not self.program.shutdown and self.program.pc < 2*len(self.program.instr_mem):
@@ -93,8 +100,15 @@ class Emulator:
             # print(self.program.ioa)
             # print("curr snake orientation", self.snake_orientation())
             # print("next snake orientation", self.next_snake_orientation())
+            # print("randomly generated address:", self.concat(
+            #     self.program.mem[68], self.program.mem[69]))
+            # print("randomly generated food LED location:",
+            #       self.program.mem[70])
+            print("snake length:", self.program.mem[40])
+            # print("snake head location:", self.concat(
+            #     self.program.mem[1], self.program.mem[2]), "=", self.program.mem[33])
 
-            if self.ticks % 20:
+            if self.ticks % 200:
                 # reset ioa
                 self.program.ioa = 0
                 self.get_input()
@@ -152,7 +166,7 @@ class Emulator:
                     # if has data (snake or fruit)
                     if mem[addr] >> k & 0b1 == 1:
                         is_head = True if addr == concat(
-                            mem[1], mem[2]) and mem[33] == pow(2, k) else False
+                            mem[1], mem[2]) and mem[97] == pow(2, k) else False
                         is_fruit = True if addr == concat(
                             mem[50], mem[51]) and mem[52] == pow(2, k) else False
 
