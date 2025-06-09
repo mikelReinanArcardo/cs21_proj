@@ -16,17 +16,15 @@ Paulo, Lian -
 
 ## Instructions on Part A1
 ```python
-# python3 assembler.py <input_filename>.asm <bin or hex>
-
-# To use our snake game:
-python3 assembler.py input.asm bin
-```
-
-## Instructions on Part A2
-```python
 # Format:
 # python3 assembler.py <input_filename>.asm <bin or hex>
 
 # To assemble our snake game instructions:
-python3 assembler.py input.asm bin
+python3 assembler.py ../parta3/input.asm bin
+```
+> NOTE: make sure you are in /parta1
+
+## Instructions on Part A2
+```python
+pyxel run emulator.py
 ```
